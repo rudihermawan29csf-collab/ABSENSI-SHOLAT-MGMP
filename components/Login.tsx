@@ -77,11 +77,15 @@ const Login: React.FC<LoginProps> = ({ onLogin, students, teachers }) => {
              return;
           }
 
-          const student = students.find(s => s.id === selectedStudentId);
+          // FIX: Konversi ID ke String untuk memastikan pencarian cocok (handle jika data dari JSON berupa number)
+          const student = students.find(s => String(s.id).trim() === String(selectedStudentId).trim());
+          
           if (student) {
              onLogin(`Wali ${student.name.split(' ')[0]}`, 'PARENT', student);
           } else {
-             setError('Data siswa tidak valid.');
+             // Debugging log jika diperlukan di console
+             console.error("Login Failed: Student ID not found in list", { selected: selectedStudentId });
+             setError('Data siswa tidak valid / tidak ditemukan.');
              setLoading(false);
           }
       }
