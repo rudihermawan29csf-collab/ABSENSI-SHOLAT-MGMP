@@ -45,15 +45,53 @@ const callApi = async (action: string, payload?: any, method: 'GET' | 'POST' = '
   }
 };
 
+// --- DATA NORMALIZER ---
+
+const normalizeDate = (dateStr: string): string => {
+  if (!dateStr) return '';
+  
+  // Jika format sudah YYYY-MM-DD (2025-02-25)
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+
+  // Jika format ISO (2025-02-25T14:00:00.000Z)
+  if (dateStr.includes('T')) {
+    return dateStr.split('T')[0];
+  }
+
+  // Jika format Slash (25/02/2025 atau 2/25/2025)
+  // Asumsi format Indonesia DD/MM/YYYY jika ada slash
+  if (dateStr.includes('/')) {
+    const parts = dateStr.split('/');
+    if (parts.length === 3) {
+      // Cek apakah part pertama adalah tahun (YYYY/MM/DD)
+      if (parts[0].length === 4) {
+         return `${parts[0]}-${parts[1].padStart(2,'0')}-${parts[2].padStart(2,'0')}`;
+      }
+      // Asumsi DD/MM/YYYY
+      return `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+    }
+  }
+
+  return dateStr;
+};
+
 // --- DATA LOADER (INIT) ---
 
 export const fetchAllData = async () => {
   const result = await callApi('GET_ALL_DATA', null, 'GET');
   if (result) {
+    // NORMALISASI DATA ATTENDANCE
+    // Pastikan tanggal konsisten YYYY-MM-DD agar terbaca di Dashboard/Scanner
+    const rawAttendance = result.attendance || [];
+    const normalizedAttendance = rawAttendance.map((r: any) => ({
+      ...r,
+      date: normalizeDate(r.date)
+    }));
+
     return {
       students: result.students || [],
       teachers: result.teachers || [],
-      attendance: result.attendance || [],
+      attendance: normalizedAttendance,
       config: result.config || INITIAL_CONFIG,
       holidays: result.holidays || []
     };

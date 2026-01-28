@@ -2,7 +2,7 @@
 import { Student, Teacher, SchoolConfig } from './types';
 
 // URL DEPLOYMENT GOOGLE APPS SCRIPT
-export const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzmIpXPDygHF3Du_1vpWmh4xKeqSOjBrxqDqT5LoaWBKP4JE8EfyuestY_GY6CSLY8WTQ/exec"; 
+export const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxkd_8yJ6ngFasDIaGBAoO4Zw_Oxw_nsJPXABDYRo0_5Qh_TQVaOE8D5E1gapjSYks5Hw/exec"; 
 
 export const INITIAL_CONFIG: SchoolConfig = {
   academicYear: '2025/2026',
