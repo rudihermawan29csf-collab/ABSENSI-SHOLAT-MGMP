@@ -59,21 +59,33 @@ function App() {
         setStudents(data.students);
         setTeachers(data.teachers);
         
-        // --- SMART MERGE LOGIC (PERBAIKAN) ---
-        // Prioritaskan data Server sepenuhnya.
-        // Hanya pertahankan data lokal jika ID-nya dimulai dengan 'temp_' (Optimistic Update).
-        // Jika ID normal ('rec_') tidak ada di server, berarti sudah dihapus di Spreadsheet, jadi buang dari lokal.
-        
+        // --- SMART MERGE LOGIC (PERBAIKAN V2) ---
+        // Masalah: Data yang dihapus di spreadsheet tetap muncul karena dianggap data lokal 'pending'.
+        // Solusi: Saat Sync, Server adalah "Single Source of Truth".
+        // Kita HANYA mempertahankan data lokal (temp_) jika data tersebut BARU SAJA dibuat (misal < 10 detik lalu)
+        // Hal ini untuk mencegah hilangnya data jika user melakukan scan TEPAT saat proses sync berjalan.
+        // Jika data temp_ sudah berumur > 10 detik dan tidak ada di server, berarti data itu sudah dihapus manual di sheet.
+
         setRecords(prevLocalRecords => {
             const serverRecords = data.attendance || [];
-            const serverRecordIds = new Set(serverRecords.map(r => r.id));
             
-            // Cari data lokal yang bersifat sementara (belum sync)
-            const pendingRecords = prevLocalRecords.filter(localR => 
-                localR.id.startsWith('temp_') && !serverRecordIds.has(localR.id)
+            const NOW = Date.now();
+            const THRESHOLD = 10000; // 10 Detik toleransi
+
+            // Hanya ambil data lokal 'temp_' yang SANGAT BARU
+            const recentPendingRecords = prevLocalRecords.filter(localR => 
+                localR.id.startsWith('temp_') && 
+                (NOW - localR.timestamp) < THRESHOLD
+            );
+
+            // Filter duplikat: Jangan masukkan pending record jika di server sudah ada (berdasarkan Student ID & Tanggal)
+            const serverKeys = new Set(serverRecords.map(r => `${r.studentId}_${r.date}`));
+            
+            const uniquePending = recentPendingRecords.filter(r => 
+                !serverKeys.has(`${r.studentId}_${r.date}`)
             );
             
-            return [...serverRecords, ...pendingRecords];
+            return [...serverRecords, ...uniquePending];
         });
         
         setSchoolConfig(data.config);
