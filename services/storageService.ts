@@ -14,6 +14,7 @@ const callApi = async (action: string, payload?: any, method: 'GET' | 'POST' = '
       method: method,
       mode: 'cors', // Pastikan mode CORS aktif
       redirect: 'follow', // Ikuti redirect dari Google Script
+      cache: 'no-store', // WAJIB: Paksa browser tidak menggunakan cache lama
     };
 
     if (method === 'GET' && payload) {
@@ -23,8 +24,6 @@ const callApi = async (action: string, payload?: any, method: 'GET' | 'POST' = '
 
     if (method === 'POST' && payload) {
       // PENTING: Gunakan text/plain untuk menghindari "Preflight OPTIONS request" 
-      // yang sering gagal di Google Apps Script (CORS issue).
-      // GAS tetap bisa mem-parse ini dengan JSON.parse(e.postData.contents)
       options.headers = {
         'Content-Type': 'text/plain;charset=utf-8',
       };

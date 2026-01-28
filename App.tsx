@@ -59,19 +59,20 @@ function App() {
         setStudents(data.students);
         setTeachers(data.teachers);
         
-        // --- SMART MERGE LOGIC ---
-        // Masalah: Jika user scan lalu langsung sync sebelum data masuk spreadsheet, 
-        // fetch akan mengembalikan data lama dan menghapus data scan baru di UI.
-        // Solusi: Gabungkan data Server + Data Lokal yang belum ada di Server.
+        // --- SMART MERGE LOGIC (PERBAIKAN) ---
+        // Prioritaskan data Server sepenuhnya.
+        // Hanya pertahankan data lokal jika ID-nya dimulai dengan 'temp_' (Optimistic Update).
+        // Jika ID normal ('rec_') tidak ada di server, berarti sudah dihapus di Spreadsheet, jadi buang dari lokal.
         
         setRecords(prevLocalRecords => {
             const serverRecords = data.attendance || [];
             const serverRecordIds = new Set(serverRecords.map(r => r.id));
             
-            // Cari data lokal yang TIDAK ADA di server (kemungkinan pending upload)
-            const pendingRecords = prevLocalRecords.filter(localR => !serverRecordIds.has(localR.id));
+            // Cari data lokal yang bersifat sementara (belum sync)
+            const pendingRecords = prevLocalRecords.filter(localR => 
+                localR.id.startsWith('temp_') && !serverRecordIds.has(localR.id)
+            );
             
-            // Prioritaskan data server, tapi pertahankan data pending
             return [...serverRecords, ...pendingRecords];
         });
         
